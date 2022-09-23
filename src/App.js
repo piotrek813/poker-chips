@@ -1,13 +1,36 @@
 import './App.css';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from './utils/firebase';
+import LogIn from './components/LogIn';
+import LogOut from './components/LogOut';
+import Table from './components/Table';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Hello World</h1>
-      </header>
-    </div>
-  );
+  const [user, loading, error] = useAuthState(auth);
+
+  if (loading) {
+    return (
+      <div>
+        <p>Initialising User...</p>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div>
+        <p>Error: {error}</p>
+      </div>
+    );
+  }
+  if (user) {
+    return (
+      <div>
+        <LogOut />
+        <Table />
+      </div>
+    );
+  }
+  return <LogIn />;
 }
 
 export default App;
