@@ -6,6 +6,13 @@ import {
   limit,
   orderBy,
   getDocs,
+  addDoc,
+  updateDoc,
+  arrayUnion,
+  doc,
+  setDoc,
+  serverTimestamp,
+  getDoc,
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
@@ -41,4 +48,40 @@ export const generateTableId = async () => {
   if (tableSnap.docs.length === 0) return formatId(0);
   const id = Number(tableSnap.docs[0].id);
   return Number.isNaN(id) ? null : formatId(id + 1);
+};
+
+export const joinTable = async (tableId) => {
+  const id = Number(tableId);
+  if (!Number.isNaN(id)) {
+    const tableRef = doc(db, 'tables', tableId);
+    const tableSnap = await getDoc(tableRef);
+    const playerRef = await addDoc(collection(db, 'players'), {
+      uid: auth.currentUser.uid,
+      name: auth.currentUser.displayName,
+      bankroll: tableSnap.data().buyIn,
+      photoURL: auth.currentUser.photoURL,
+    });
+    await updateDoc(tableRef, {
+      players: arrayUnion(`players/${playerRef.id}`),
+    });
+  }
+};
+
+export const createTable = async (buyIn) => {
+  const id = await generateTableId();
+  if (id !== null) {
+    const playerRef = await addDoc(collection(db, 'players'), {
+      uid: auth.currentUser.uid,
+      name: auth.currentUser.displayName,
+      bankroll: buyIn,
+      photoURL: auth.currentUser.photoURL,
+    });
+    await setDoc(doc(db, 'tables', id), {
+      createdAt: serverTimestamp(),
+      buyIn,
+      players: arrayUnion(`players/${playerRef.id}`),
+    });
+    return id;
+  }
+  return null;
 };

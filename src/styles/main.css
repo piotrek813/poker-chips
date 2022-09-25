@@ -1,0 +1,53 @@
+.layout-wrapper {
+  width: 50%;
+  margin: auto;
+}
+
+.btn {
+  font-size: 20px;
+  padding: 10px 40px;
+  display: block;
+  width: 200px;
+  text-align: center;
+  background: var(--c-blue-1);
+  color: var(--white-1);
+  text-decoration: none;
+  margin-top: 20px;
+}
+
+button {
+  background: none;
+  padding: 10px 15px;
+  font-size: 16px;
+  border-radius: 5px;
+  color: var(--white-1);
+  border: solid 2px var(--c-white-1);
+}
+
+nav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header > h1 {
+  font-size: 44px;
+}
+
+.profile {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.profile > * {
+  margin: 0 5px;
+}
+
+img.avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+
+}
