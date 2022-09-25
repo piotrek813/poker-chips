@@ -1,5 +1,12 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import {
+  collection,
+  getFirestore,
+  query,
+  limit,
+  orderBy,
+  getDocs,
+} from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -21,4 +28,17 @@ export const converter = {
     id: snap.id,
     ...snap.data(),
   }),
+};
+export const generateTableId = async () => {
+  const formatId = (id) => String(id).padStart(4, 0);
+
+  const q = query(
+    collection(db, 'tables'),
+    orderBy('createdAt', 'desc'),
+    limit(1),
+  );
+  const tableSnap = await getDocs(q);
+  if (tableSnap.docs.length === 0) return formatId(0);
+  const id = Number(tableSnap.docs[0].id);
+  return Number.isNaN(id) ? null : formatId(id + 1);
 };

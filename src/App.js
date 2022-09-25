@@ -3,7 +3,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from './utils/firebase';
 import LogIn from './components/LogIn';
 import LogOut from './components/LogOut';
-import Table from './components/Table';
+import Setup from './components/Setup';
 
 function App() {
   const [user, loading, error] = useAuthState(auth);
@@ -26,7 +26,7 @@ function App() {
     return (
       <div>
         <LogOut />
-        <Table />
+        <Setup />
       </div>
     );
   }
