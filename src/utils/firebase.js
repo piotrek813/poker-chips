@@ -7,8 +7,6 @@ import {
   orderBy,
   getDocs,
   addDoc,
-  updateDoc,
-  arrayUnion,
   doc,
   setDoc,
   serverTimestamp,
@@ -55,14 +53,12 @@ export const joinTable = async (tableId) => {
   if (!Number.isNaN(id)) {
     const tableRef = doc(db, 'tables', tableId);
     const tableSnap = await getDoc(tableRef);
-    const playerRef = await addDoc(collection(db, 'players'), {
+    await addDoc(collection(db, 'players'), {
       uid: auth.currentUser.uid,
       name: auth.currentUser.displayName,
       bankroll: tableSnap.data().buyIn,
       photoURL: auth.currentUser.photoURL,
-    });
-    await updateDoc(tableRef, {
-      players: arrayUnion(`players/${playerRef.id}`),
+      tableId: tableRef.path,
     });
   }
 };
@@ -70,16 +66,17 @@ export const joinTable = async (tableId) => {
 export const createTable = async (buyIn) => {
   const id = await generateTableId();
   if (id !== null) {
-    const playerRef = await addDoc(collection(db, 'players'), {
+    const tableRef = doc(db, 'tables', id);
+    await setDoc(tableRef, {
+      createdAt: serverTimestamp(),
+      buyIn,
+    });
+    await addDoc(collection(db, 'players'), {
       uid: auth.currentUser.uid,
       name: auth.currentUser.displayName,
       bankroll: buyIn,
       photoURL: auth.currentUser.photoURL,
-    });
-    await setDoc(doc(db, 'tables', id), {
-      createdAt: serverTimestamp(),
-      buyIn,
-      players: arrayUnion(`players/${playerRef.id}`),
+      tableId: tableRef.path,
     });
     return id;
   }
