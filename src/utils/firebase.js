@@ -53,7 +53,7 @@ export const joinTable = async (tableId) => {
   if (!Number.isNaN(id)) {
     const tableRef = doc(db, 'tables', tableId);
     const tableSnap = await getDoc(tableRef);
-    await addDoc(collection(db, 'players'), {
+    await setDoc(doc(db, 'players', tableId + auth.currentUser.uid), {
       uid: auth.currentUser.uid,
       name: auth.currentUser.displayName,
       bankroll: tableSnap.data().buyIn,
@@ -71,12 +71,13 @@ export const createTable = async (buyIn) => {
       createdAt: serverTimestamp(),
       buyIn,
     });
-    await addDoc(collection(db, 'players'), {
+    await setDoc(doc(db, 'players', id + auth.currentUser.uid), {
       uid: auth.currentUser.uid,
       name: auth.currentUser.displayName,
       bankroll: buyIn,
       photoURL: auth.currentUser.photoURL,
       tableId: tableRef.path,
+      admin: true,
     });
     return id;
   }

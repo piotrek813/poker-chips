@@ -28,6 +28,7 @@ function App() {
         <nav>
           <section className="profile">
             <img
+              referrerPolicy="no-referrer"
               className="avatar"
               src={user.photoURL}
               alt={`${user.displayName} avatar`}
