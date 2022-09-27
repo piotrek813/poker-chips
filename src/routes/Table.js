@@ -53,7 +53,6 @@ function Table() {
 
     setBet(betVal);
   };
-
   const handleAction = async (e) => {
     e.preventDefault();
     if (bet !== '') {
@@ -61,7 +60,9 @@ function Table() {
       if (!currentPlayer.didFold) {
         if (
           action === 'fold' ||
-          action === 'call' ||
+          (action === 'call' &&
+            table.highestBet &&
+            currentPlayer.bankroll >= table.highestBet) ||
           (action === 'bet' &&
             betNum !== 0 &&
             currentPlayer.bankroll >= betNum &&
