@@ -61,6 +61,10 @@ img.avatar {
   filter: grayscale(1) opacity(0.3)
 }
 
+.player-turn {
+  filter:hue-rotate(45deg) blur(1px);
+}
+
 fieldset {
   display: contents;
 }

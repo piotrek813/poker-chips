@@ -1,4 +1,5 @@
 import { Form, redirect } from 'react-router-dom';
+import { useState } from 'react';
 import { createTable } from '../utils/firebase';
 import Input from '../components/Input';
 
@@ -10,10 +11,18 @@ export const action = async ({ request }) => {
 };
 
 function Join() {
+  const [isDisabled, setIsDisabled] = useState(false);
+
   return (
     <Form method="post">
       <Input type="number" label="buy in" id="buy-in" required />
-      <button type="submit">Join</button>
+      <button
+        disabled={isDisabled}
+        type="submit"
+        onClick={() => setIsDisabled(true)}
+      >
+        Join
+      </button>
     </Form>
   );
 }

@@ -59,6 +59,8 @@ export const joinTable = async (tableId) => {
       bankroll: tableSnap.data().buyIn,
       photoURL: auth.currentUser.photoURL,
       tableId: tableRef.path,
+      didFold: false,
+      highestChipsInvested: 0,
     });
   }
 };
@@ -70,6 +72,10 @@ export const createTable = async (buyIn) => {
     await setDoc(tableRef, {
       createdAt: serverTimestamp(),
       buyIn,
+      turn: 0,
+      bettingRoundIndex: 0,
+      highestBet: 0,
+      highestChipsInvested: 0,
     });
     await setDoc(doc(db, 'players', id + auth.currentUser.uid), {
       uid: auth.currentUser.uid,
@@ -78,6 +84,8 @@ export const createTable = async (buyIn) => {
       photoURL: auth.currentUser.photoURL,
       tableId: tableRef.path,
       admin: true,
+      didFold: false,
+      highestChipsInvested: 0,
     });
     return id;
   }

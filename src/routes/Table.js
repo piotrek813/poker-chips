@@ -11,14 +11,15 @@ import {
   limit,
   serverTimestamp,
   orderBy,
-  getDocs,
   deleteDoc,
   doc,
   updateDoc,
   increment,
+  writeBatch,
 } from 'firebase/firestore';
 import { useState } from 'react';
 import { auth, converter, db } from '../utils/firebase';
+import { bettingRoundsIndexToNameMap } from '../utils/constants';
 
 export async function loader({ params }) {
   return params.id;
@@ -37,6 +38,7 @@ function Table() {
   const playersQuery = query(
     collection(db, 'players').withConverter(converter),
     where('tableId', '==', `tables/${id}`),
+    where('didFold', '==', false),
   );
   const [players, isLoadingPlayers] = useCollectionData(playersQuery);
 
@@ -55,47 +57,88 @@ function Table() {
   };
   const handleAction = async (e) => {
     e.preventDefault();
-    if (bet !== '') {
-      let betNum = Number(bet);
+    if (players[table.turn].uid === currentPlayer.uid)
       if (!currentPlayer.didFold) {
-        if (
-          action === 'fold' ||
-          (action === 'call' &&
-            table.highestBet &&
-            currentPlayer.bankroll >= table.highestBet) ||
-          (action === 'bet' &&
-            betNum !== 0 &&
-            currentPlayer.bankroll >= betNum &&
-            (typeof table.highestBet === 'undefined' ||
-              table.highestBet <= betNum))
-        ) {
-          await addDoc(collection(db, 'actions'), {
-            type: action,
-            ...(action === 'bet' && { bet: betNum }),
-            tableId: `tables/${id}`,
-            playerName: auth.currentUser.displayName,
-            createdAt: serverTimestamp(),
-          });
-
-          if (action === 'fold')
-            await updateDoc(currentPlayerRef, {
-              didFold: true,
+        if (bet !== '') {
+          let betNum = Number(bet);
+          if (
+            action === 'check' ||
+            action === 'fold' ||
+            (action === 'call' &&
+              table.highestBet &&
+              currentPlayer.bankroll >= table.highestBet) ||
+            (action === 'bet' &&
+              betNum !== 0 &&
+              currentPlayer.bankroll >= betNum &&
+              (typeof table.highestBet === 'undefined' ||
+                table.highestBet <= betNum))
+          ) {
+            await addDoc(collection(db, 'actions'), {
+              type: action,
+              ...(action === 'bet' && { bet: betNum }),
+              tableId: `tables/${id}`,
+              playerName: auth.currentUser.displayName,
+              createdAt: serverTimestamp(),
             });
 
-          if (action === 'bet' || action === 'call') {
-            if (action === 'call') betNum = table.highestBet;
-            await updateDoc(tableRef, {
-              ...(action === 'bet' && { highestBet: betNum }),
-              pot: increment(betNum),
-            });
-            await updateDoc(currentPlayerRef, {
-              bankroll: increment(-betNum),
-              chipsInvestedInRound: increment(betNum),
-            });
+            if (action === 'fold')
+              await updateDoc(currentPlayerRef, {
+                didFold: true,
+              });
+
+            if (
+              action === 'bet' ||
+              (action === 'call' &&
+                currentPlayer.chipsInvestedInRound !==
+                  table.highestChipsInvested)
+            ) {
+              if (action === 'call')
+                betNum =
+                  table.highestChipsInvested -
+                  currentPlayer.chipsInvestedInRound;
+              await updateDoc(tableRef, {
+                ...(action === 'bet' && {
+                  highestBet: betNum,
+                  highestChipsInvested:
+                    currentPlayer.highestChipsInvestedInRound || betNum,
+                }),
+                pot: increment(betNum),
+              });
+              await updateDoc(currentPlayerRef, {
+                bankroll: increment(-betNum),
+                chipsInvestedInRound: increment(betNum),
+              });
+            }
+
+            const { turn } = table;
+            let bettingRoundIndex = 0;
+            if (turn === players.length - 1) {
+              if (
+                players[turn].chipsInvestedInRound ===
+                players[0].chipsInvestedInRound
+              ) {
+                bettingRoundIndex += 1;
+                const batch = writeBatch(db);
+                players.forEach((p) =>
+                  batch.update(doc(db, 'players', p.id), {
+                    didFold: false,
+                    chipsInvestedInRound: 0,
+                  }),
+                );
+                batch.commit();
+              }
+              await updateDoc(tableRef, {
+                turn: 0,
+                bettingRoundIndex,
+              });
+            } else {
+              await updateDoc(tableRef, {
+                turn: increment(1),
+              });
+            }
           }
         }
       }
-    }
   };
 
   const removePlayer = (playerId) => {
@@ -104,13 +147,19 @@ function Table() {
   if (!isCurrentPlayerLoading) {
     return (
       <div>
-        <h3>Pot: {!isTableLoading && table.pot}</h3>
+        <h2>Pot: {!isTableLoading && table.pot}</h2>
+        <h3>
+          {!isTableLoading &&
+            bettingRoundsIndexToNameMap[table.bettingRoundIndex]}
+        </h3>
         <ol className="players">
           {!isLoadingPlayers &&
-            players.map((player) => (
+            players.map((player, index) => (
               <li
                 key={player.id}
-                className={`${player.didFold ? 'player-fold' : ''}`}
+                className={`${player.didFold ? 'player-fold' : ''} ${
+                  index === table.turn ? 'player-turn' : ''
+                } `}
               >
                 <div className="profile">
                   <img
@@ -148,8 +197,15 @@ function Table() {
               </li>
             ))}
         </ul>
+        {console.log(players)}
         <form onSubmit={(e) => handleAction(e)}>
-          <fieldset disabled={currentPlayer.didFold}>
+          <fieldset
+            disabled={
+              currentPlayer.didFold
+              // ||
+              // players[table.turn].uid !== currentPlayer.uid
+            }
+          >
             <label htmlFor="bet">
               <input
                 type="text"
@@ -167,6 +223,9 @@ function Table() {
             </button>
             <button type="submit" onClick={() => setAction('call')}>
               Call
+            </button>
+            <button type="submit" onClick={() => setAction('check')}>
+              check
             </button>
           </fieldset>
         </form>
