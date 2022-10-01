@@ -48,19 +48,28 @@ export const generateTableId = async () => {
   return Number.isNaN(id) ? null : formatId(id + 1);
 };
 
+const setPlayer = ({ bankroll, tableId, playerId, isAdmin }) =>
+  setDoc(doc(db, 'players', playerId), {
+    createdAt: serverTimestamp(),
+    uid: auth.currentUser.uid,
+    name: auth.currentUser.displayName,
+    photoURL: auth.currentUser.photoURL,
+    bankroll,
+    tableId,
+    isAdmin: typeof isAdmin === 'undefined' ? false : isAdmin,
+    didFold: false,
+    chipsInvestedInRound: 0,
+  });
+
 export const joinTable = async (tableId) => {
   const id = Number(tableId);
   if (!Number.isNaN(id)) {
     const tableRef = doc(db, 'tables', tableId);
     const tableSnap = await getDoc(tableRef);
-    await setDoc(doc(db, 'players', tableId + auth.currentUser.uid), {
-      uid: auth.currentUser.uid,
-      name: auth.currentUser.displayName,
+    await setPlayer({
       bankroll: tableSnap.data().buyIn,
-      photoURL: auth.currentUser.photoURL,
       tableId: tableRef.path,
-      didFold: false,
-      highestChipsInvested: 0,
+      playerId: tableId + auth.currentUser.uid,
     });
   }
 };
@@ -72,20 +81,17 @@ export const createTable = async (buyIn) => {
     await setDoc(tableRef, {
       createdAt: serverTimestamp(),
       buyIn,
+      pot: 0,
       turn: 0,
       bettingRoundIndex: 0,
       highestBet: 0,
       highestChipsInvested: 0,
     });
-    await setDoc(doc(db, 'players', id + auth.currentUser.uid), {
-      uid: auth.currentUser.uid,
-      name: auth.currentUser.displayName,
+    await setPlayer({
       bankroll: buyIn,
-      photoURL: auth.currentUser.photoURL,
       tableId: tableRef.path,
-      admin: true,
-      didFold: false,
-      highestChipsInvested: 0,
+      playerId: id + auth.currentUser.uid,
+      isAdmin: true,
     });
     return id;
   }

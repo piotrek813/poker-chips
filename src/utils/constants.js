@@ -3,5 +3,5 @@ export const bettingRoundsIndexToNameMap = Object.freeze({
   0: 'pre-flop',
   1: 'flop',
   2: 'turn',
-  4: 'river',
+  3: 'river',
 });
