@@ -1,7 +1,9 @@
 import { Form, redirect, useNavigation } from 'react-router-dom';
 import { createTable } from '../utils/firebase';
 import Input from '../components/Input';
+import Label from '../components/Label';
 import Spinner from '../components/Spinner';
+import Button from '../components/Button';
 
 export const action = async ({ request }) => {
   const formData = await request.formData();
@@ -16,10 +18,18 @@ function Join() {
   if (navigation.state === 'submitting') return <Spinner />;
   return (
     <Form method="post">
-      <Input type="number" label="buy in" id="buy-in" required />
-      <button type="submit" disabled={navigation.state === 'submitting'}>
-        Create
-      </button>
+      <Label htmlFor="buy-in">
+        Buy in
+        <Input
+          type="number"
+          name="buy-in"
+          id="buy-in"
+          inputMode="numeric"
+          min="0"
+          max="1000000000000"
+        />
+      </Label>
+      <Button type="submit">Create</Button>
     </Form>
   );
 }

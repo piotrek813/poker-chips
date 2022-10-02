@@ -1,24 +1,23 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import App from './routes/App';
+import RouterLayout from './layouts/RouterLayout';
+import Home from './routes/home';
 import ErrorPage from './error-page';
 import Table, { loader as tableLoader } from './routes/Table';
-import Setup from './routes/Setup';
 import Create, { action as createAction } from './routes/Create';
 import Join, { action as joinAction } from './routes/Join';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: <Home />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    element: <RouterLayout />,
     errorElement: <ErrorPage />,
     children: [
-      {
-        path: '/',
-        element: <Setup />,
-      },
       {
         path: 'create',
         element: <Create />,

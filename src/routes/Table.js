@@ -161,7 +161,7 @@ function Table() {
     });
   };
 
-  if (typeof currentPlayer === 'undefined')
+  if (!isCurrentPlayerLoading && typeof currentPlayer === 'undefined')
     return <h1>You don&apos;t have access to this table</h1>;
   if (!isCurrentPlayerLoading && !isTableLoading && !arePlayersLoading) {
     return (
