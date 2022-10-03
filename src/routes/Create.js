@@ -4,6 +4,7 @@ import Input from '../components/Input';
 import Label from '../components/Label';
 import Spinner from '../components/Spinner';
 import Button from '../components/Button';
+import Center from '../layouts/Center';
 
 export const action = async ({ request }) => {
   const formData = await request.formData();
@@ -17,20 +18,22 @@ function Join() {
 
   if (navigation.state === 'submitting') return <Spinner />;
   return (
-    <Form method="post">
-      <Label htmlFor="buy-in">
-        Buy in
-        <Input
-          type="number"
-          name="buy-in"
-          id="buy-in"
-          inputMode="numeric"
-          min="0"
-          max="1000000000000"
-        />
-      </Label>
-      <Button type="submit">Create</Button>
-    </Form>
+    <Center>
+      <Form method="post">
+        <Label htmlFor="buy-in">
+          Buy in
+          <Input
+            type="number"
+            name="buy-in"
+            id="buy-in"
+            inputMode="numeric"
+            min="0"
+            max="1000000000000"
+          />
+        </Label>
+        <Button type="submit">Create</Button>
+      </Form>
+    </Center>
   );
 }
 

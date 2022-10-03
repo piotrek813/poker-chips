@@ -41,6 +41,11 @@ const GlobalStyle = createGlobalStyle`
 
   #root {
     height: 100%;
+
+    @media(min-width: 768px) {
+      width: 50%;
+      margin: auto;
+    }
   }
 
 `;
