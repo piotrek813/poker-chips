@@ -6,11 +6,11 @@ import {
   limit,
   orderBy,
   getDocs,
-  addDoc,
   doc,
   setDoc,
   serverTimestamp,
   getDoc,
+  updateDoc,
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
@@ -86,6 +86,7 @@ export const createTable = async (buyIn) => {
       bettingRoundIndex: 0,
       highestBet: 0,
       highestChipsInvested: 0,
+      didStart: false,
     });
     await setPlayer({
       bankroll: buyIn,
@@ -96,4 +97,17 @@ export const createTable = async (buyIn) => {
     return id;
   }
   return null;
+};
+
+export const startGame = async (tableId, playersWaiting) => {
+  const player = await getDoc(
+    doc(db, 'players', tableId + auth.currentUser.uid),
+  );
+  const playerSnap = player.data();
+  if (
+    playerSnap.tableId === `tables/${tableId}` &&
+    playerSnap.isAdmin &&
+    playersWaiting > 1
+  )
+    await updateDoc(doc(db, 'tables', tableId), { didStart: true });
 };
