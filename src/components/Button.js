@@ -2,10 +2,16 @@ import { Link } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import PropTypes from 'prop-types';
 
-function Button({ type, to, secondary, children }) {
+function Button({ type, to, secondary, children, onClick }) {
   if (type === 'button' || type === 'submit')
     return (
-      <StyledButton as="button" $secondary={secondary} type={type}>
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      <StyledButton
+        as="button"
+        $secondary={secondary}
+        type={type}
+        onClick={onClick}
+      >
         {children}
       </StyledButton>
     );

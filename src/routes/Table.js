@@ -16,9 +16,13 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { useMemo, useState } from 'react';
+import styled from 'styled-components';
 import { auth, converter, db } from '../utils/firebase';
 import { bettingRoundsIndexToNameMap } from '../utils/constants';
 import SelectPlayers from '../components/SelectPlayers';
+import Input from '../components/Input';
+import Button from '../components/Button';
+import Lobby from '../components/Lobby';
 
 export async function loader({ params }) {
   return params.id;
@@ -161,6 +165,14 @@ function Table() {
     });
   };
 
+  if (!isTableLoading && !table.didStart)
+    return (
+      <Lobby
+        tableId={tableRef.id}
+        isAdmin={currentPlayer.isAdmin}
+        playersWaiting={allPlayers.length}
+      />
+    );
   if (!isCurrentPlayerLoading && typeof currentPlayer === 'undefined')
     return <h1>You don&apos;t have access to this table</h1>;
   if (!isCurrentPlayerLoading && !isTableLoading && !arePlayersLoading) {
@@ -223,34 +235,37 @@ function Table() {
         </ul>
         {players.length !== 0 && (
           <form onSubmit={(e) => handleAction(e)}>
-            <fieldset
+            <Fieldset
               disabled={
                 currentPlayer.didFold ||
                 players[table.turn].uid !== currentPlayer.uid
               }
             >
-              <label htmlFor="bet">
-                <input
+              <Label htmlFor="bet">
+                Your Bet
+                <Input
                   type="text"
                   id="bet"
                   name="bet"
                   value={bet}
                   onChange={handleBetChange}
                 />
-              </label>
-              <button type="submit" onClick={() => setAction('bet')}>
-                Bet
-              </button>
-              <button type="submit" onClick={() => setAction('fold')}>
-                Fold
-              </button>
-              <button type="submit" onClick={() => setAction('call')}>
-                Call
-              </button>
-              <button type="submit" onClick={() => setAction('check')}>
-                check
-              </button>
-            </fieldset>
+              </Label>
+              <ButtonsGrid>
+                <Button type="submit" onClick={() => setAction('bet')}>
+                  Bet
+                </Button>
+                <Button type="submit" onClick={() => setAction('fold')}>
+                  Fold
+                </Button>
+                <Button type="submit" onClick={() => setAction('call')}>
+                  Call
+                </Button>
+                <Button type="submit" onClick={() => setAction('check')}>
+                  check
+                </Button>
+              </ButtonsGrid>
+            </Fieldset>
           </form>
         )}
       </div>
@@ -258,5 +273,20 @@ function Table() {
   }
   return <>Loading</>;
 }
+
+const Label = styled.label`
+  font-size: 20px;
+`;
+
+const Fieldset = styled.fieldset`
+  display: contents;
+`;
+
+const ButtonsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 2;
+  grid-column-gap: 20px;
+`;
 
 export default Table;

@@ -17,6 +17,7 @@ const GlobalStyle = createGlobalStyle`
   --body-padding: 20px 20px;
 
   --font-size-label: 30px;
+  --font-size-heading-medium: 30px;
   --font-weight-medium: 500;
   --font-weight-bold: 700;
   --font-weight-black: 900;
