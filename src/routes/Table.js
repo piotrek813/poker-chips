@@ -16,13 +16,14 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { useMemo, useState } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { auth, converter, db } from '../utils/firebase';
 import { bettingRoundsIndexToNameMap } from '../utils/constants';
 import SelectPlayers from '../components/SelectPlayers';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import Lobby from '../components/Lobby';
+import Spinner from '../components/Spinner';
 
 export async function loader({ params }) {
   return params.id;
@@ -165,7 +166,9 @@ function Table() {
     });
   };
 
-  if (!isTableLoading && !table.didStart)
+  if (isTableLoading || isCurrentPlayerLoading || arePlayersLoading)
+    return <Spinner autoHeight />;
+  if (!table.didStart)
     return (
       <Lobby
         tableId={tableRef.id}
@@ -173,105 +176,88 @@ function Table() {
         playersWaiting={allPlayers.length}
       />
     );
-  if (!isCurrentPlayerLoading && typeof currentPlayer === 'undefined')
+  if (typeof currentPlayer === 'undefined')
     return <h1>You don&apos;t have access to this table</h1>;
-  if (!isCurrentPlayerLoading && !isTableLoading && !arePlayersLoading) {
-    return (
-      <div>
-        {isNewHand && (
-          <SelectPlayers
-            players={players}
-            selectedPlayers={selectedPlayers}
-            selectPlayer={selectPlayer}
-            closeModal={closeSelectPlayers}
-          />
-        )}
-        <h2>Pot: {table.pot}</h2>
-        <h2>Turn: {table.turn}</h2>
-        <h3>{bettingRoundsIndexToNameMap[table.bettingRoundIndex]}</h3>
-        <ol className="players">
-          {players.map((player, index) => (
-            <li
-              key={player.id}
-              className={`${player.didFold ? 'player-fold' : ''} ${
-                index === table.turn ? 'player-turn' : ''
-              } `}
-            >
-              <div className="profile">
-                <img
-                  className="avatar"
-                  referrerPolicy="no-referrer"
-                  src={
-                    player.photoURL ||
-                    `https://www.metal-archives.com/images/cats/${Math.floor(
-                      Math.random() * 100,
-                    )}.jpg`
-                  }
-                  alt={`${player.name} avatar`}
-                />
-                <b>{player.name}</b>
-              </div>
-              <ul>
-                <li>bankroll: {player.bankroll}</li>
-                <li>
-                  chips invested in this round: {player.chipsInvestedInRound}
-                </li>
-              </ul>
-              {currentPlayer.isAdmin && !player.isAdmin && (
-                <button type="button" onClick={() => removePlayer(player.id)}>
-                  remove
-                </button>
-              )}
+
+  return (
+    <>
+      {isNewHand && (
+        <SelectPlayers
+          players={players}
+          selectedPlayers={selectedPlayers}
+          selectPlayer={selectPlayer}
+          closeModal={closeSelectPlayers}
+        />
+      )}
+      <h2>Pot: {table.pot}</h2>
+      <h2>Turn: {table.turn}</h2>
+      <h3>{bettingRoundsIndexToNameMap[table.bettingRoundIndex]}</h3>
+      <List className="players">
+        {players.map((player, index) => (
+          <Player key={player.id} $isTurn={index === table.turn}>
+            <PlayerPicture
+              referrerPolicy="no-referrer"
+              src={
+                player.photoURL ||
+                `https://www.metal-archives.com/images/cats/${Math.floor(
+                  Math.random() * 100,
+                )}.jpg`
+              }
+              alt={`${player.name} avatar`}
+            />
+            <div>
+              <h4>{player.name}</h4>
+              <p>bankroll: {player.bankroll}</p>
+              <p>chips invested in this round: {player.chipsInvestedInRound}</p>
+            </div>
+          </Player>
+        ))}
+      </List>
+      <ul>
+        {!isLoadingActions &&
+          actions.map((a) => (
+            <li key={a.id} className="profile">
+              <b>{a.playerName}</b> {a.type} {a.bet}
             </li>
           ))}
-        </ol>
-        <ul>
-          {!isLoadingActions &&
-            actions.map((a) => (
-              <li key={a.id} className="profile">
-                <b>{a.playerName}</b> {a.type} {a.bet}
-              </li>
-            ))}
-        </ul>
-        {players.length !== 0 && (
-          <form onSubmit={(e) => handleAction(e)}>
-            <Fieldset
-              disabled={
-                currentPlayer.didFold ||
-                players[table.turn].uid !== currentPlayer.uid
-              }
-            >
-              <Label htmlFor="bet">
-                Your Bet
-                <Input
-                  type="text"
-                  id="bet"
-                  name="bet"
-                  value={bet}
-                  onChange={handleBetChange}
-                />
-              </Label>
-              <ButtonsGrid>
-                <Button type="submit" onClick={() => setAction('bet')}>
-                  Bet
-                </Button>
-                <Button type="submit" onClick={() => setAction('fold')}>
-                  Fold
-                </Button>
-                <Button type="submit" onClick={() => setAction('call')}>
-                  Call
-                </Button>
-                <Button type="submit" onClick={() => setAction('check')}>
-                  check
-                </Button>
-              </ButtonsGrid>
-            </Fieldset>
-          </form>
-        )}
-      </div>
-    );
-  }
-  return <>Loading</>;
+      </ul>
+      {players.length !== 0 && (
+        <form onSubmit={(e) => handleAction(e)}>
+          <Fieldset
+            disabled={
+              currentPlayer.didFold ||
+              players[table.turn].uid !== currentPlayer.uid
+            }
+          >
+            <Label htmlFor="bet">
+              Your Bet
+              <Input
+                type="text"
+                id="bet"
+                name="bet"
+                value={bet}
+                onChange={handleBetChange}
+              />
+            </Label>
+            <ButtonsGrid>
+              <Button type="submit" onClick={() => setAction('bet')}>
+                Bet
+              </Button>
+              <Button type="submit" onClick={() => setAction('fold')}>
+                Fold
+              </Button>
+              <Button type="submit" onClick={() => setAction('call')}>
+                Call
+              </Button>
+              <Button type="submit" onClick={() => setAction('check')}>
+                check
+              </Button>
+            </ButtonsGrid>
+          </Fieldset>
+        </form>
+      )}
+    </>
+  );
 }
 
 const Label = styled.label`
@@ -287,6 +273,39 @@ const ButtonsGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 2;
   grid-column-gap: 20px;
+`;
+
+const List = styled.ul`
+  list-style: none;
+  padding: 0;
+`;
+
+const Player = styled.li`
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  grid-gap: 20px;
+  align-items: center;
+  padding: 20px;
+  margin-bottom: 20px;
+
+  & h4 {
+    margin: 0 0 3px 0;
+  }
+  & p {
+    margin: 0 0 4px 0;
+  }
+  ${({ $isTurn }) =>
+    $isTurn &&
+    css`
+      border-radius: 50px;
+      background: #4b4b5a;
+      box-shadow: 20px 20px 60px #40404d, -20px -20px 60px #565668;
+    `}
+`;
+
+const PlayerPicture = styled.img`
+  width: 100%;
+  border-radius: 50%;
 `;
 
 export default Table;

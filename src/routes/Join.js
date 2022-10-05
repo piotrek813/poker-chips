@@ -32,7 +32,9 @@ function Join() {
             max="9999"
           />
         </Label>
-        <Button type="submit">Join</Button>
+        <Button fullWidth type="submit">
+          Join
+        </Button>
       </Form>
     </Center>
   );

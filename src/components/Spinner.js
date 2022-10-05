@@ -1,8 +1,9 @@
 import styled from 'styled-components';
+import PropTypes from 'prop-types';
 
-function Spinner() {
+function Spinner({ autoHeight }) {
   return (
-    <Wrapper>
+    <Wrapper $autoHeight>
       <StyledSpinner viewBox="0 0 50 50">
         <circle
           className="path"
@@ -17,8 +18,10 @@ function Spinner() {
   );
 }
 
-const Wrapper = styled.div`
-  height: 100%;
+const Wrapper = styled.div.attrs((props) => ({
+  $height: props.$autoHeight ? '100%' : 'auto',
+}))`
+  height: $height;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -56,5 +59,13 @@ const StyledSpinner = styled.svg`
     }
   }
 `;
+
+Spinner.propTypes = {
+  autoHeight: PropTypes.bool,
+};
+
+Spinner.defaultProps = {
+  autoHeight: false,
+};
 
 export default Spinner;

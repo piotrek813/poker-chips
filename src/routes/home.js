@@ -8,7 +8,7 @@ function Home() {
       <Header />
       <main>
         <Button to="create">Create a table</Button>
-        <Button secondary to="join">
+        <Button variant="secondary" to="join">
           Join a table
         </Button>
       </main>

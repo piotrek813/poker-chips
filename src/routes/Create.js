@@ -31,7 +31,9 @@ function Join() {
             max="1000000000000"
           />
         </Label>
-        <Button type="submit">Create</Button>
+        <Button type="submit" fullWidth>
+          Create
+        </Button>
       </Form>
     </Center>
   );
