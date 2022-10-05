@@ -46,8 +46,8 @@ function MainLayout({ children }) {
     );
   }
   return (
-    <Wrapper center>
-      <Center>
+    <Wrapper>
+      <Center vertically>
         <Header />
         <LogIn />
       </Center>

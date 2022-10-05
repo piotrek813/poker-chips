@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components';
 
 const Center = styled.div.attrs((props) => ({
-  $centerVertically: props.$vertically || false,
+  $centerVertically: props.vertically || false,
 }))`
   display: flex;
   flex-direction: column;
@@ -12,6 +12,7 @@ const Center = styled.div.attrs((props) => ({
       ? css`
           justify-content: center;
           height: 100%;
+          margin-top: -100px;
         `
       : css`
           margin-top: 100px;
