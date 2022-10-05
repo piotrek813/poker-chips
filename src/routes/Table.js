@@ -130,6 +130,8 @@ function Table() {
       );
       await batch.commit();
     }
+
+    if (updatedPlayer.didFold) setIsNewHand(true);
   };
 
   const selectPlayer = (player) => {
@@ -138,10 +140,6 @@ function Table() {
         current.filter((p) => p.id !== player.id),
       );
     else setSelectedPlayers((current) => [...current, player]);
-  };
-
-  const removePlayer = (playerId) => {
-    deleteDoc(doc(db, 'players', playerId));
   };
 
   const closeSelectPlayers = async () => {
@@ -164,6 +162,8 @@ function Table() {
       highestChipsInvested: 0,
       pot: 0,
     });
+
+    setSelectedPlayers([]);
   };
 
   if (isTableLoading || isCurrentPlayerLoading || arePlayersLoading)
