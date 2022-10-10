@@ -4,9 +4,9 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import RouterLayout from './layouts/RouterLayout';
 import Home from './routes/home';
 import ErrorPage from './error-page';
-import Table, { loader as tableLoader } from './routes/Table';
-import Create, { action as createAction } from './routes/Create';
-import Join, { action as joinAction } from './routes/Join';
+import Table, { loader as tableLoader } from './routes/table';
+import Create, { action as createAction } from './routes/create';
+import Join, { action as joinAction } from './routes/join';
 
 const router = createBrowserRouter([
   {

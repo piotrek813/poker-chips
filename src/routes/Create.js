@@ -13,7 +13,7 @@ export const action = async ({ request }) => {
   return redirect(`/t/${tableId}`);
 };
 
-function Join() {
+function create() {
   const navigation = useNavigation();
 
   if (navigation.state === 'submitting') return <Spinner />;
@@ -39,4 +39,4 @@ function Join() {
   );
 }
 
-export default Join;
+export default create;

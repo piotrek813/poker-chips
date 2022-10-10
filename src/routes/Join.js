@@ -14,7 +14,7 @@ export const action = async ({ request }) => {
   return redirect(`/t/${tableId}`);
 };
 
-function Join() {
+function join() {
   const navigation = useNavigation();
 
   if (navigation.state === 'submitting') return <Spinner />;
@@ -45,4 +45,4 @@ const Span = styled.span`
   font-weight: var(--font-weight-black);
 `;
 
-export default Join;
+export default join;

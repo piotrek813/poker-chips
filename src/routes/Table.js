@@ -7,9 +7,7 @@ import {
   collection,
   query,
   where,
-  limit,
   orderBy,
-  deleteDoc,
   doc,
   updateDoc,
   increment,
@@ -24,11 +22,13 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import Lobby from '../components/Lobby';
 import Spinner from '../components/Spinner';
+import { ReactComponent as Logo } from '../images/logo.svg';
+import { ReactComponent as Spade } from '../images/spade.svg';
 
 export async function loader({ params }) {
   return params.id;
 }
-function Table() {
+function tableRoute() {
   const id = useLoaderData();
   const [isNewHand, setIsNewHand] = useState(false);
   const [selectedPlayers, setSelectedPlayers] = useState([]);
@@ -51,14 +51,6 @@ function Table() {
     () => (arePlayersLoading ? [] : allPlayers.filter((p) => !p.didFold)),
     [allPlayers],
   );
-
-  const actionsQuery = query(
-    collection(db, 'actions').withConverter(converter),
-    orderBy('createdAt', 'asc'),
-    limit(25),
-    where('tableId', '==', `tables/${id}`),
-  );
-  const [actions, isLoadingActions] = useCollectionData(actionsQuery);
 
   const handleBetChange = (e) => {
     const betVal = e.target.value.replace(/\D/g, '');
@@ -189,38 +181,24 @@ function Table() {
           closeModal={closeSelectPlayers}
         />
       )}
-      <h2>Pot: {table.pot}</h2>
-      <h2>Turn: {table.turn}</h2>
-      <h3>{bettingRoundsIndexToNameMap[table.bettingRoundIndex]}</h3>
-      <List className="players">
-        {players.map((player, index) => (
-          <Player key={player.id} $isTurn={index === table.turn}>
-            <PlayerPicture
-              referrerPolicy="no-referrer"
-              src={
-                player.photoURL ||
-                `https://www.metal-archives.com/images/cats/${Math.floor(
-                  Math.random() * 100,
-                )}.jpg`
-              }
-              alt={`${player.name} avatar`}
-            />
-            <div>
-              <h4>{player.name}</h4>
-              <p>bankroll: {player.bankroll}</p>
-              <p>chips invested in this round: {player.chipsInvestedInRound}</p>
-            </div>
-          </Player>
+      <Table>
+        <StyledLogo />
+        {players.map((p) => (
+          <PlayerOuter key={p.id}>
+            <PlayerInner>
+              <Avatar src={p.photoURL} alt={`${p.displayName} avatar`} />
+              <Bankroll>{p.bankroll}</Bankroll>
+            </PlayerInner>
+            <ChipOuter>
+              <Chip>
+                <Spade />
+              </Chip>
+              {p.chipsInvestedInRound}
+            </ChipOuter>
+          </PlayerOuter>
         ))}
-      </List>
-      <ul>
-        {!isLoadingActions &&
-          actions.map((a) => (
-            <li key={a.id} className="profile">
-              <b>{a.playerName}</b> {a.type} {a.bet}
-            </li>
-          ))}
-      </ul>
+      </Table>
+
       {players.length !== 0 && (
         <form onSubmit={(e) => handleAction(e)}>
           <Fieldset
@@ -260,6 +238,78 @@ function Table() {
   );
 }
 
+const Table = styled.div`
+  background: #68bc5b;
+  height: 293px;
+  border-radius: 28px;
+  border: 8px solid #7b543f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+`;
+
+const StyledLogo = styled(Logo)`
+  width: 41%;
+  opacity: 12%;
+  & path {
+    fill: #edf8eb;
+  }
+`;
+
+const PlayerOuter = styled.div`
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translateY(40%);
+`;
+
+const PlayerInner = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ChipOuter = styled.div`
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  column-gap: 4px;
+`;
+
+const Chip = styled.div`
+  background-color: #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #5b5bbc;
+`;
+
+const Avatar = styled.img`
+  width: 44px;
+  border-radius: 50%;
+`;
+
+const Bankroll = styled.span`
+  font-size: 14px;
+  background: #b5724e;
+  border-radius: 4px;
+  line-height: 21px;
+  padding: 1px 11px;
+  margin-top: -11px;
+`;
+
 const Label = styled.label`
   font-size: 20px;
 `;
@@ -275,37 +325,4 @@ const ButtonsGrid = styled.div`
   grid-column-gap: 20px;
 `;
 
-const List = styled.ul`
-  list-style: none;
-  padding: 0;
-`;
-
-const Player = styled.li`
-  display: grid;
-  grid-template-columns: 50px 1fr;
-  grid-gap: 20px;
-  align-items: center;
-  padding: 20px;
-  margin-bottom: 20px;
-
-  & h4 {
-    margin: 0 0 3px 0;
-  }
-  & p {
-    margin: 0 0 4px 0;
-  }
-  ${({ $isTurn }) =>
-    $isTurn &&
-    css`
-      border-radius: 50px;
-      background: #4b4b5a;
-      box-shadow: 20px 20px 60px #40404d, -20px -20px 60px #565668;
-    `}
-`;
-
-const PlayerPicture = styled.img`
-  width: 100%;
-  border-radius: 50%;
-`;
-
-export default Table;
+export default tableRoute;
