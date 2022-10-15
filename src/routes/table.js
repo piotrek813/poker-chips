@@ -35,9 +35,6 @@ function tableRoute() {
   const [bet, setBet] = useState(0);
   const [action, setAction] = useState('');
   const currentPlayerRef = doc(db, 'players', id + auth.currentUser.uid);
-  // todo derive this from allPlayers dont make unnecessary calls to firestore
-  const [currentPlayer, isCurrentPlayerLoading] =
-    useDocumentData(currentPlayerRef);
 
   const tableRef = doc(db, 'tables', id);
   const [table, isTableLoading] = useDocumentData(tableRef);
@@ -48,10 +45,11 @@ function tableRoute() {
     where('tableId', '==', `tables/${id}`),
   );
   const [allPlayers, arePlayersLoading] = useCollectionData(playersQuery);
-  const players = useMemo(
-    () => (arePlayersLoading ? [] : allPlayers.filter((p) => !p.didFold)),
-    [allPlayers],
-  );
+
+  const currentPlayer = arePlayersLoading
+    ? {}
+    : allPlayers.find((p) => p.uid === auth.currentUser.uid);
+  const players = arePlayersLoading ? [] : allPlayers.filter((p) => !p.didFold);
 
   const handleBetChange = (e) => {
     const betVal = e.target.value.replace(/\D/g, '');
@@ -173,8 +171,7 @@ function tableRoute() {
     setSelectedPlayers([]);
   };
 
-  if (isTableLoading || isCurrentPlayerLoading || arePlayersLoading)
-    return <Spinner autoHeight />;
+  if (isTableLoading || arePlayersLoading) return <Spinner autoHeight />;
   if (!table.didStart)
     return (
       <Lobby
