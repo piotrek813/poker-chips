@@ -68,11 +68,14 @@ export const joinTable = async (id) => {
     const tableRef = doc(db, 'tables', tableId);
     const tableSnap = await getDoc(tableRef);
     if (tableSnap.didStart) return undefined;
-    await setPlayer({
-      bankroll: tableSnap.data().buyIn,
-      tableId: tableRef.path,
-      playerId: tableId + auth.currentUser.uid,
-    });
+    const playerRef = doc(db, 'players', tableId + auth.currentUser.uid);
+    const playerSnap = await getDoc(playerRef);
+    if (!playerSnap.exists())
+      await setPlayer({
+        bankroll: tableSnap.data().buyIn,
+        tableId: tableRef.path,
+        playerId: tableId + auth.currentUser.uid,
+      });
 
     return tableId;
   }

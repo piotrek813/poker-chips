@@ -33,8 +33,12 @@ const Number = styled.span`
 
 Lobby.propTypes = {
   tableId: PropTypes.string.isRequired,
-  isAdmin: PropTypes.bool.isRequired,
+  isAdmin: PropTypes.bool,
   playersWaiting: PropTypes.number.isRequired,
+};
+
+Lobby.defaultProps = {
+  isAdmin: false,
 };
 
 export default Lobby;
