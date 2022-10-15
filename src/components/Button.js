@@ -1,29 +1,33 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import { Link } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import PropTypes from 'prop-types';
 
-function Button({ type, to, small, fullWidth, variant, children, onClick }) {
+function Button({
+  type,
+  to,
+  size,
+  fullWidth,
+  variant,
+  boxShadow,
+  children,
+  onClick,
+}) {
+  const styleProps = {
+    $size: size,
+    $fullWidth: fullWidth,
+    $variant: variant,
+    $boxShadow: boxShadow,
+  };
   if (type === 'button' || type === 'submit')
     return (
-      <StyledButton
-        as="button"
-        type={type}
-        onClick={onClick}
-        $variant={variant}
-        $small={small}
-        $fullWidth={fullWidth}
-      >
+      <StyledButton as="button" type={type} onClick={onClick} {...styleProps}>
         {children}
       </StyledButton>
     );
   if (type === 'link')
     return (
-      <StyledButton
-        to={to}
-        $variant={variant}
-        $small={small}
-        $fullWidth={fullWidth}
-      >
+      <StyledButton to={to} {...styleProps}>
         {children}
       </StyledButton>
     );
@@ -31,16 +35,29 @@ function Button({ type, to, small, fullWidth, variant, children, onClick }) {
 const StyledButton = styled(Link).attrs((props) => ({
   $type: props.type || 'link',
   $variant: props.$variant,
-  $small: props.$small || false,
+  $size: props.$size,
+  $boxShadow: props.$boxShadow,
 }))`
-  ${({ $small }) =>
-    $small
-      ? css`
+  &:hover {
+    cursor: pointer;
+  }
+
+  ${({ $size }) => {
+    switch ($size) {
+      case 'small':
+        return css`
           padding: 8px 10px;
           font-size: 16px;
           border-radius: 5px;
-        `
-      : css`
+        `;
+      case 'medium':
+        return css`
+          font-size: 20px;
+          border-radius: 5px;
+          padding: 10px 35px;
+        `;
+      default:
+        return css`
           font-size: 20px;
           padding: 15px 40px;
           font-weight: 500;
@@ -49,12 +66,20 @@ const StyledButton = styled(Link).attrs((props) => ({
           text-align: center;
           text-decoration: none;
           margin-top: 17px;
-        `}
+        `;
+    }
+  }}
 
   ${({ type }) =>
     type !== 'link' &&
     css`
       border: none;
+    `}
+
+  ${({ boxShadow }) =>
+    boxShadow &&
+    css`
+      box-shadow: var(--box-shadow-button);
     `}
 
   ${({ $fullWidth }) =>
@@ -72,9 +97,14 @@ const StyledButton = styled(Link).attrs((props) => ({
         `;
       case 'borders':
         return css`
-          color: var(--white-1);
+          color: var(--c-white-1);
           border: solid 2px var(--c-white-1);
           background: none;
+        `;
+      case 'lightGrey':
+        return css`
+          color: var(--c-white-3);
+          background: var(--c-grey-2);
         `;
       default:
         return css`
@@ -88,18 +118,20 @@ const StyledButton = styled(Link).attrs((props) => ({
 Button.propTypes = {
   to: PropTypes.string,
   children: PropTypes.string.isRequired,
-  variant: PropTypes.oneOf(['secondary', 'borders', 'default']),
+  variant: PropTypes.oneOf(['secondary', 'borders', 'lightGrey', 'default']),
   type: PropTypes.oneOf(['link', 'button', 'submit']),
-  small: PropTypes.bool,
+  size: PropTypes.oneOf(['small', 'medium', 'normal']),
   fullWidth: PropTypes.bool,
+  boxShadow: PropTypes.bool,
 };
 
 Button.defaultProps = {
   to: '',
   type: 'link',
   variant: 'default',
-  small: false,
+  size: 'normal',
   fullWidth: false,
+  boxShadow: false,
 };
 
 export default Button;

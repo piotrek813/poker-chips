@@ -4,7 +4,12 @@ import Button from './Button';
 
 function LogOut() {
   return (
-    <Button type="button" small variant="borders" onClick={() => signOut(auth)}>
+    <Button
+      type="button"
+      size="small"
+      variant="borders"
+      onClick={() => signOut(auth)}
+    >
       Log out
     </Button>
   );

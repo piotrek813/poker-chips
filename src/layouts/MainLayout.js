@@ -1,5 +1,6 @@
 import { useAuthState } from 'react-firebase-hooks/auth';
 import styled from 'styled-components';
+import { signInAnonymously, updateProfile } from 'firebase/auth';
 import { auth } from '../utils/firebase';
 import LogIn from '../components/LogIn';
 import LogOut from '../components/LogOut';
@@ -7,6 +8,7 @@ import Wrapper from './Wrapper';
 import Spinner from '../components/Spinner';
 import Header from '../components/MainHeader';
 import Center from './Center';
+import Button from '../components/Button';
 
 function MainLayout({ children }) {
   const [user, loading, error] = useAuthState(auth);

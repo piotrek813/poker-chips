@@ -34,9 +34,8 @@ export const converter = {
     ...snap.data(),
   }),
 };
+const formatId = (id) => String(id).padStart(4, 0);
 export const generateTableId = async () => {
-  const formatId = (id) => String(id).padStart(4, 0);
-
   const q = query(
     collection(db, 'tables'),
     orderBy('createdAt', 'desc'),
@@ -58,12 +57,14 @@ const setPlayer = ({ bankroll, tableId, playerId, isAdmin }) =>
     tableId,
     isAdmin: typeof isAdmin === 'undefined' ? false : isAdmin,
     didFold: false,
-    chipsInvestedInRound: 0,
+    currentContribution: 0,
+    totalContribution: 0,
   });
 
-export const joinTable = async (tableId) => {
-  const id = Number(tableId);
-  if (!Number.isNaN(id)) {
+export const joinTable = async (id) => {
+  let tableId = Number(id);
+  if (!Number.isNaN(tableId)) {
+    tableId = formatId(tableId);
     const tableRef = doc(db, 'tables', tableId);
     const tableSnap = await getDoc(tableRef);
     await setPlayer({
@@ -71,7 +72,10 @@ export const joinTable = async (tableId) => {
       tableId: tableRef.path,
       playerId: tableId + auth.currentUser.uid,
     });
+
+    return tableId;
   }
+  return null;
 };
 
 export const createTable = async (buyIn) => {

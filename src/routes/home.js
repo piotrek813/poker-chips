@@ -1,6 +1,8 @@
 import Button from '../components/Button';
 import MainLayout from '../layouts/MainLayout';
 import Header from '../components/MainHeader';
+import SelectPlayers from '../components/SelectPlayers';
+import { getPlayers } from '../utils/mockData';
 
 function Home() {
   return (

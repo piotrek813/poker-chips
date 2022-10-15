@@ -13,17 +13,17 @@ import {
   increment,
   writeBatch,
 } from 'firebase/firestore';
-import { useMemo, useState } from 'react';
-import styled, { css } from 'styled-components';
+import { useEffect, useMemo, useState } from 'react';
+import styled from 'styled-components';
 import { auth, converter, db } from '../utils/firebase';
-import { bettingRoundsIndexToNameMap } from '../utils/constants';
+import Table from '../components/Table';
 import SelectPlayers from '../components/SelectPlayers';
-import Input from '../components/Input';
 import Button from '../components/Button';
 import Lobby from '../components/Lobby';
 import Spinner from '../components/Spinner';
-import { ReactComponent as Logo } from '../images/logo.svg';
-import { ReactComponent as Spade } from '../images/spade.svg';
+import getBettingRoundName from '../utils/getBettingRoundName';
+import getNextPlayerIndex from '../logic/getNextPlayerIndex';
+import calculateProfit from '../logic/calculateProfit';
 
 export async function loader({ params }) {
   return params.id;
@@ -35,6 +35,7 @@ function tableRoute() {
   const [bet, setBet] = useState(0);
   const [action, setAction] = useState('');
   const currentPlayerRef = doc(db, 'players', id + auth.currentUser.uid);
+  // todo derive this from allPlayers dont make unnecessary calls to firestore
   const [currentPlayer, isCurrentPlayerLoading] =
     useDocumentData(currentPlayerRef);
 
@@ -60,15 +61,16 @@ function tableRoute() {
 
   const handleAction = async (e) => {
     e.preventDefault();
-    let isNewRound = false;
-    if (players.length === 1) setIsNewHand(true);
-    else if (players[table.turn].uid !== currentPlayer.uid) return;
+    let startNewRound = false;
+    let startNewHand = false;
+    if (players[table.turn].uid !== currentPlayer.uid) return;
     if (currentPlayer.didFold) return;
     if (bet === '') return;
-    const betNum =
-      action === 'bet'
-        ? Number(bet)
-        : table.highestChipsInvested - currentPlayer.chipsInvestedInRound;
+    let betNum = 0;
+    if (action === 'bet') betNum = Number(bet);
+    else
+      betNum = table.highestChipsInvested - currentPlayer.currentContribution;
+    if (currentPlayer.bankroll < betNum) betNum = currentPlayer.bankroll;
     const updatedPlayer = currentPlayer;
     const updatedTable = table;
     switch (action) {
@@ -78,52 +80,62 @@ function tableRoute() {
       case 'bet':
       case 'call':
         if (betNum === 0) return;
-        if (currentPlayer.bankroll <= betNum) return;
+        if (currentPlayer.bankroll < betNum) return;
         if (action === 'bet' && table.highestBet > betNum) return;
         updatedPlayer.bankroll -= betNum;
-        updatedPlayer.chipsInvestedInRound += betNum;
+        updatedPlayer.currentContribution += betNum;
+        updatedPlayer.totalContribution += betNum;
         updatedTable.pot += betNum;
         if (action === 'bet') {
           updatedTable.highestBet = betNum;
-          updatedTable.highestChipsInvested =
-            updatedPlayer.chipsInvestedInRound;
+          updatedTable.highestChipsInvested = updatedPlayer.currentContribution;
         }
         break;
       case 'check':
-        if (table.highestChipsInvested !== currentPlayer.chipsInvestedInRound)
-          return;
+        if (currentPlayer.bankroll)
+          if (table.highestChipsInvested !== currentPlayer.currentContribution)
+            return;
         break;
       default:
         break;
     }
 
-    if (table.turn === players.length - 1) {
-      updatedTable.turn = 0;
-      if (
-        updatedPlayer.chipsInvestedInRound === players[0].chipsInvestedInRound
-      ) {
-        if (table.bettingRoundIndex === 3) setIsNewHand(true);
-        else {
-          // new betting round
-          updatedTable.bettingRoundIndex += 1;
-          updatedTable.highestBet = 0;
-          updatedTable.highestChipsInvested = 0;
-          isNewRound = true;
-        }
+    const nextPlayer = getNextPlayerIndex(
+      players,
+      table.turn,
+      updatedPlayer.didFold,
+    );
+    if (nextPlayer === -1 || nextPlayer === table.turn) startNewHand = true;
+    else if (
+      nextPlayer < table.turn &&
+      updatedPlayer.currentContribution ===
+        players[nextPlayer].currentContribution
+    ) {
+      if (table.bettingRoundIndex === 3) startNewHand = true;
+      else {
+        updatedTable.bettingRoundIndex += 1;
+        updatedTable.highestBet = 0;
+        updatedTable.highestChipsInvested = 0;
+        startNewRound = true;
       }
-    } else if (!updatedPlayer.didFold) updatedTable.turn += 1;
+    }
+    updatedTable.turn = nextPlayer;
+    if (updatedPlayer.didFold && updatedTable.turn !== 0)
+      updatedTable.turn -= 1;
+
+    if (players.length === 2 && currentPlayer.didFold) startNewHand = true;
 
     await updateDoc(tableRef, updatedTable);
     await updateDoc(currentPlayerRef, updatedPlayer);
-    if (isNewRound) {
+    if (startNewRound) {
       const batch = writeBatch(db);
       players.forEach((p) =>
-        batch.update(doc(db, 'players', p.id), { chipsInvestedInRound: 0 }),
+        batch.update(doc(db, 'players', p.id), { currentContribution: 0 }),
       );
       await batch.commit();
     }
-
-    if (updatedPlayer.didFold) setIsNewHand(true);
+    if (startNewHand) setIsNewHand(true);
+    setBet(0);
   };
 
   const selectPlayer = (player) => {
@@ -137,16 +149,19 @@ function tableRoute() {
   const closeSelectPlayers = async () => {
     if (selectedPlayers.length === 0) return;
     setIsNewHand(false);
+
+    const allPlayersProfit = calculateProfit(allPlayers, selectedPlayers);
+
     const batch = writeBatch(db);
-    allPlayers.forEach((p) =>
+    allPlayers.forEach((p, i) =>
       batch.update(doc(db, 'players', p.id), {
-        ...(selectedPlayers.some((s) => s.id === p.id) && {
-          bankroll: increment(Math.floor(table.pot / selectedPlayers.length)),
-        }),
+        bankroll: increment(allPlayersProfit[i]),
         didFold: false,
-        chipsInvestedInRound: 0,
+        currentContribution: 0,
+        totalContribution: 0,
       }),
     );
+
     await batch.commit();
     await updateDoc(tableRef, {
       bettingRoundIndex: 0,
@@ -170,7 +185,6 @@ function tableRoute() {
     );
   if (typeof currentPlayer === 'undefined')
     return <h1>You don&apos;t have access to this table</h1>;
-
   return (
     <>
       {isNewHand && (
@@ -181,23 +195,9 @@ function tableRoute() {
           closeModal={closeSelectPlayers}
         />
       )}
-      <Table>
-        <StyledLogo />
-        {players.map((p) => (
-          <PlayerOuter key={p.id}>
-            <PlayerInner>
-              <Avatar src={p.photoURL} alt={`${p.displayName} avatar`} />
-              <Bankroll>{p.bankroll}</Bankroll>
-            </PlayerInner>
-            <ChipOuter>
-              <Chip>
-                <Spade />
-              </Chip>
-              {p.chipsInvestedInRound}
-            </ChipOuter>
-          </PlayerOuter>
-        ))}
-      </Table>
+
+      <h1>{getBettingRoundName(table.bettingRoundIndex)}</h1>
+      <Table players={players} />
 
       {players.length !== 0 && (
         <form onSubmit={(e) => handleAction(e)}>
@@ -207,28 +207,63 @@ function tableRoute() {
               players[table.turn].uid !== currentPlayer.uid
             }
           >
-            <Label htmlFor="bet">
-              Your Bet
-              <Input
-                type="text"
+            <BetInputContainer>
+              <BetNumberInput
+                type="number"
                 id="bet"
                 name="bet"
                 value={bet}
+                inputMode="numeric"
+                min="0"
+                max={`${currentPlayer.bankroll}`}
                 onChange={handleBetChange}
               />
-            </Label>
+              <BetRangeInput
+                type="range"
+                name="bet"
+                id="bet"
+                min="0"
+                step="1"
+                max={`${currentPlayer.bankroll}`}
+                value={bet}
+                onChange={(e) => setBet(e.target.value)}
+              />
+            </BetInputContainer>
             <ButtonsGrid>
-              <Button type="submit" onClick={() => setAction('bet')}>
+              <Button
+                type="submit"
+                size="medium"
+                boxShadow
+                variant="lightGrey"
+                onClick={() => setAction('bet')}
+              >
                 Bet
               </Button>
-              <Button type="submit" onClick={() => setAction('fold')}>
+              <Button
+                type="submit"
+                size="medium"
+                boxShadow
+                onClick={() => setAction('fold')}
+              >
                 Fold
               </Button>
-              <Button type="submit" onClick={() => setAction('call')}>
+              <Button
+                type="submit"
+                size="medium"
+                boxShadow
+                variant="lightGrey"
+                onClick={() => setAction('call')}
+              >
                 Call
               </Button>
-              <Button type="submit" onClick={() => setAction('check')}>
-                check
+              <Button
+                type="submit"
+                size="medium"
+                boxShadow
+                variant="secondary"
+                onClick={() => setAction('check')}
+              >
+                Check
               </Button>
             </ButtonsGrid>
           </Fieldset>
@@ -238,91 +273,86 @@ function tableRoute() {
   );
 }
 
-const Table = styled.div`
-  background: #68bc5b;
-  height: 293px;
-  border-radius: 28px;
-  border: 8px solid #7b543f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-`;
+const Fieldset = styled.fieldset`
+  border: none;
+  padding: 0;
 
-const StyledLogo = styled(Logo)`
-  width: 41%;
-  opacity: 12%;
-  & path {
-    fill: #edf8eb;
+  &:disabled {
+    opacity: 0.7;
   }
 `;
 
-const PlayerOuter = styled.div`
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  transform: translateY(40%);
-`;
-
-const PlayerInner = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-`;
-
-const ChipOuter = styled.div`
-  font-size: 18px;
+const BetInputContainer = styled(Fieldset)`
+  background: var(--c-grey-1);
+  margin: 0;
+  padding: 10px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  column-gap: 4px;
+  justify-content: space-around;
+
+  margin-bottom: 23px;
 `;
 
-const Chip = styled.div`
-  background-color: #fff;
-  border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px dashed #5b5bbc;
-`;
-
-const Avatar = styled.img`
-  width: 44px;
-  border-radius: 50%;
-`;
-
-const Bankroll = styled.span`
+const BetNumberInput = styled.input`
+  appearance: textfield;
+  margin: 0;
+  margin: 0;
+  display: inline-block;
   font-size: 14px;
-  background: #b5724e;
-  border-radius: 4px;
-  line-height: 21px;
-  padding: 1px 11px;
-  margin-top: -11px;
+  background: var(--c-dark-1);
+  border: none;
+  color: var(--c-white-3);
+  padding: 8px 10px;
+  border-radius: 5px;
+  width: 50px;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    appearance: none;
+  }
 `;
 
-const Label = styled.label`
-  font-size: 20px;
+const BetRangeInput = styled.input`
+  cursor: ew-resize;
+  width: 80%;
+  appearance: none;
+  background: transparent;
+
+  &::-webkit-slider-runnable-track {
+    height: 8px;
+    background: var(--c-grey-2);
+    border-radius: 8px;
+  }
+  &::-moz-range-track {
+    height: 8px;
+    background: var(--c-grey-2);
+    border-radius: 8px;
+  }
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    background: var(--c-purple-1);
+    margin-top: -6px;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+  }
+
+  &::-moz-range-thumb {
+    border: none;
+    border-radius: 50%;
+    background: var(--c-purple-1);
+    height: 20px;
+    width: 20px;
+  }
 `;
 
-const Fieldset = styled.fieldset`
-  display: contents;
-`;
-
-const ButtonsGrid = styled.div`
+const ButtonsGrid = styled(Fieldset)`
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 2;
-  grid-column-gap: 20px;
+  grid-gap: 14px;
 `;
 
 export default tableRoute;

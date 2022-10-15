@@ -9,8 +9,8 @@ import Label from '../components/Label';
 
 export const action = async ({ request }) => {
   const formData = await request.formData();
-  const tableId = formData.get('table-id');
-  await joinTable(tableId);
+  let tableId = formData.get('table-id');
+  tableId = await joinTable(tableId);
   return redirect(`/t/${tableId}`);
 };
 

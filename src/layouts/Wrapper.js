@@ -12,7 +12,8 @@ const GlobalStyle = createGlobalStyle`
   --c-red-1: #FF6464;
 
   --c-purple-1: #5B5BBC;
-  --c-grey-1: #636376;
+  --c-grey-1: #58586D;
+  --c-grey-2: #7979AF;
 
   --body-padding: 20px 20px;
 
@@ -21,6 +22,8 @@ const GlobalStyle = createGlobalStyle`
   --font-weight-medium: 500;
   --font-weight-bold: 700;
   --font-weight-black: 900;
+
+  --box-shadow-button: 4px 4px 20px rgb(0 0 0 / 20%);
   }
 
   * {
@@ -46,6 +49,12 @@ const GlobalStyle = createGlobalStyle`
       width: 50%;
       margin: auto;
     }
+  }
+
+  input, button {
+    font-family: inherit;
+    /* -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale; */
   }
 
 `;
