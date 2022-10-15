@@ -67,6 +67,7 @@ export const joinTable = async (id) => {
     tableId = formatId(tableId);
     const tableRef = doc(db, 'tables', tableId);
     const tableSnap = await getDoc(tableRef);
+    if (tableSnap.didStart) return undefined;
     await setPlayer({
       bankroll: tableSnap.data().buyIn,
       tableId: tableRef.path,
@@ -75,7 +76,7 @@ export const joinTable = async (id) => {
 
     return tableId;
   }
-  return null;
+  return undefined;
 };
 
 export const createTable = async (buyIn) => {
@@ -100,7 +101,7 @@ export const createTable = async (buyIn) => {
     });
     return id;
   }
-  return null;
+  return undefined;
 };
 
 export const startGame = async (tableId, playersWaiting) => {

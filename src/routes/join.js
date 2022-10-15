@@ -1,4 +1,11 @@
-import { Form, redirect, useNavigation } from 'react-router-dom';
+import {
+  Form,
+  redirect,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+} from 'react-router-dom';
+import { useEffect } from 'react';
 import styled from 'styled-components';
 import { joinTable } from '../utils/firebase';
 import Spinner from '../components/Spinner';
@@ -14,8 +21,17 @@ export const action = async ({ request }) => {
   return redirect(`/t/${tableId}`);
 };
 
+export async function loader({ params }) {
+  return params.id;
+}
+
 function join() {
   const navigation = useNavigation();
+  const id = useLoaderData();
+  const submit = useSubmit();
+  const formData = new FormData();
+  formData.append('table-id', id);
+  useEffect(() => id && submit(formData, { method: 'post' }), []);
 
   if (navigation.state === 'submitting') return <Spinner />;
   return (

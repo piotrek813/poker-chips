@@ -6,7 +6,10 @@ import Home from './routes/home';
 import ErrorPage from './error-page';
 import Table, { loader as tableLoader } from './routes/table';
 import Create, { action as createAction } from './routes/create';
-import Join, { action as joinAction } from './routes/join';
+import Join, {
+  action as joinAction,
+  loader as JoinLoader,
+} from './routes/join';
 
 const router = createBrowserRouter([
   {
@@ -27,6 +30,12 @@ const router = createBrowserRouter([
         path: 'join',
         element: <Join />,
         action: joinAction,
+      },
+      {
+        path: 'join/:id',
+        element: <Join />,
+        action: joinAction,
+        loader: JoinLoader,
       },
       {
         path: 't/:id',
