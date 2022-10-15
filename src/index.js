@@ -2,11 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import RouterLayout from './layouts/RouterLayout';
-import Home from './routes/homeRoute';
+import Home from './routes/home';
 import ErrorPage from './error-page';
-import Table, { loader as tableLoader } from './routes/tableRoute';
-import Create, { action as createAction } from './routes/createRoute';
-import Join, { action as joinAction } from './routes/joinRoute';
+import Table, { loader as tableLoader } from './routes/table';
+import Create, { action as createAction } from './routes/create';
+import Join, { action as joinAction } from './routes/join';
 
 const router = createBrowserRouter([
   {
