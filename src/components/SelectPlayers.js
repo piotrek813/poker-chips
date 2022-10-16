@@ -4,6 +4,7 @@ import Button from './Button';
 function SelectPlayers({ players, selectedPlayers, selectPlayer, closeModal }) {
   return (
     <Modal>
+      <Heading>Decide the winner(s)</Heading>
       <PlayerGrid>
         {players.map((p) => (
           // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
@@ -19,7 +20,7 @@ function SelectPlayers({ players, selectedPlayers, selectPlayer, closeModal }) {
       </PlayerGrid>
 
       <Button type="button" onClick={closeModal}>
-        M&apos;key
+        Confirm
       </Button>
     </Modal>
   );
@@ -37,13 +38,16 @@ const Modal = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: #8a8aa6;
-  padding: 20vw;
+  background: var(--c-dark-1);
+`;
+
+const Heading = styled.h1`
+  text-align: center;
 `;
 
 const PlayerGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  grid-template-columns: repeat(2, minmax(auto, 100px));
   grid-gap: 20px;
 `;
 

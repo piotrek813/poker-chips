@@ -114,6 +114,7 @@ function tableRoute() {
         startNewRound = true;
       }
     }
+    console.log(players, updatedPlayer, startNewHand, table.bettingRoundIndex);
     updatedTable.turn = nextPlayer;
 
     if (updatedPlayer.didFold && updatedTable.turn !== 0)
@@ -131,7 +132,7 @@ function tableRoute() {
       await batch.commit();
     }
     if (startNewHand) {
-      if (players.length === 2) {
+      if (players.length === 2 && updatedPlayer.didFold) {
         const profitingPlayer = players.filter((p) => !p.didFold);
         triggerNewHand(allPlayers, profitingPlayer, tableRef);
       } else setIsNewHand(true);
@@ -170,7 +171,7 @@ function tableRoute() {
 
   return (
     <>
-      {isNewHand && (
+      {!isNewHand && (
         <SelectPlayers
           players={players}
           selectedPlayers={selectedPlayers}
