@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import Center from '../layouts/Center';
@@ -5,6 +6,19 @@ import Button from './Button';
 import { startGame } from '../utils/firebase';
 
 function Lobby({ tableId, isAdmin, playersWaiting }) {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        `https://chips.webarts.pl/join/${tableId}`,
+      );
+      setIsCopied(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <Center>
       <Heading>Players waiting...</Heading>
@@ -13,8 +27,20 @@ function Lobby({ tableId, isAdmin, playersWaiting }) {
         <Button
           type="button"
           onClick={() => startGame(tableId, playersWaiting)}
+          fullWidth
         >
           Start game
+        </Button>
+      )}
+      {navigator.clipboard && (
+        <Button
+          type="button"
+          variant="secondary"
+          fullWidth
+          onClick={handleCopy}
+          disabled={isCopied}
+        >
+          {!isCopied ? 'Copy Invitation' : 'Copied!'}
         </Button>
       )}
     </Center>

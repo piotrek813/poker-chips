@@ -194,7 +194,12 @@ function tableRoute() {
         />
       )}
 
-      <h1>{getBettingRoundName(table.bettingRoundIndex)}</h1>
+      <GameInfo>
+        <BettingRound>
+          {getBettingRoundName(table.bettingRoundIndex)}
+        </BettingRound>
+        <Pot>Pot: {table.pot}</Pot>
+      </GameInfo>
       <Table players={players} />
 
       {players.length !== 0 && (
@@ -271,6 +276,20 @@ function tableRoute() {
     </>
   );
 }
+
+const GameInfo = styled.div`
+  /* background: var(--c-purple-1); */
+`;
+
+const BettingRound = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+`;
+
+const Pot = styled.h3`
+  font-size: 20px;
+  font-weight: 400;
+`;
 
 const Fieldset = styled.fieldset`
   border: none;
