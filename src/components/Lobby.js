@@ -20,6 +20,7 @@ function Lobby({ tableId, isAdmin, playersWaiting }) {
     }
   };
 
+  // eslint-disable-next-line no-console
   console.log(navigator, navigator.clipboard);
   return (
     <Center>

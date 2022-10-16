@@ -132,7 +132,6 @@ function tableRoute() {
     }
     if (startNewHand) {
       if (players.length === 2) {
-        console.log(players);
         const profitingPlayer = players.filter((p) => !p.didFold);
         triggerNewHand(allPlayers, profitingPlayer, tableRef);
       } else setIsNewHand(true);
