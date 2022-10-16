@@ -1,30 +1,58 @@
-import styled from 'styled-components';
+import { useState } from 'react';
+import styled, { css } from 'styled-components';
 import Button from './Button';
 
 function SelectPlayers({ players, selectedPlayers, selectPlayer, closeModal }) {
-  return (
-    <Modal>
-      <Heading>Decide the winner(s)</Heading>
-      <PlayerGrid>
-        {players.map((p) => (
-          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
-          <Player
-            key={`${p.id}select`}
-            src={p.photoURL}
-            alt={p.disaplayName}
-            onClick={() => selectPlayer(p)}
-            $selected={selectedPlayers.some((e) => e.id === p.id)}
-            referrerPolicy="no-referrer"
-          />
-        ))}
-      </PlayerGrid>
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
-      <Button type="button" onClick={closeModal}>
-        Confirm
-      </Button>
-    </Modal>
+  return (
+    <>
+      <Modal>
+        <Heading>Decide the winner(s)</Heading>
+        <PlayerGrid>
+          {players.map((p) => (
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
+            <Player
+              key={`${p.id}select`}
+              src={p.photoURL}
+              alt={p.disaplayName}
+              onClick={() => selectPlayer(p)}
+              $selected={selectedPlayers.some((e) => e.id === p.id)}
+              referrerPolicy="no-referrer"
+            />
+          ))}
+        </PlayerGrid>
+
+        <Button type="button" onClick={() => setShowConfirmationModal(true)}>
+          Confirm
+        </Button>
+      </Modal>
+      {showConfirmationModal && (
+        <Modal>
+          <h3>Are you sure?</h3>
+          <ButtonsGroup>
+            <Button
+              type="button"
+              size="medium"
+              variant="secondary"
+              onClick={() => setShowConfirmationModal(false)}
+            >
+              No
+            </Button>
+            <Button type="button" size="medium" onClick={closeModal}>
+              Yes
+            </Button>
+          </ButtonsGroup>
+        </Modal>
+      )}
+    </>
   );
 }
+
+const ButtonsGroup = styled.div`
+  display: flex;
+  gap: 17px;
+`;
 
 const Modal = styled.div`
   display: flex;
@@ -33,7 +61,7 @@ const Modal = styled.div`
   column-gap: 20px;
   align-items: center;
   position: fixed;
-  z-index: 9999;
+  z-index: 9998;
   top: 0;
   left: 0;
   right: 0;
