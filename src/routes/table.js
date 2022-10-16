@@ -61,6 +61,7 @@ function tableRoute() {
     e.preventDefault();
     let startNewRound = false;
     let startNewHand = false;
+    if (table.turn === -1) return;
     if (players[table.turn].uid !== currentPlayer.uid) return;
     if (currentPlayer.didFold) return;
     if (bet === '') return;
@@ -98,13 +99,11 @@ function tableRoute() {
         break;
     }
 
-    const nextPlayer = getNextPlayerIndex(
-      players,
-      table.turn,
-      updatedPlayer.didFold,
-    );
-    if (nextPlayer === -1 || nextPlayer === table.turn) startNewHand = true;
-    else if (
+    let nextPlayer = getNextPlayerIndex(players, table.turn);
+    if (nextPlayer === -1 || nextPlayer === table.turn) {
+      nextPlayer = getNextPlayerIndex(allPlayers);
+      startNewHand = true;
+    } else if (
       nextPlayer < table.turn &&
       updatedPlayer.currentContribution ===
         players[nextPlayer].currentContribution
@@ -118,6 +117,7 @@ function tableRoute() {
       }
     }
     updatedTable.turn = nextPlayer;
+
     if (updatedPlayer.didFold && updatedTable.turn !== 0)
       updatedTable.turn -= 1;
 
@@ -182,6 +182,7 @@ function tableRoute() {
     );
   if (typeof currentPlayer === 'undefined')
     return <h1>You don&apos;t have access to this table</h1>;
+
   return (
     <>
       {isNewHand && (
@@ -201,6 +202,7 @@ function tableRoute() {
           <Fieldset
             disabled={
               currentPlayer.didFold ||
+              table.turn === -1 ||
               players[table.turn].uid !== currentPlayer.uid
             }
           >

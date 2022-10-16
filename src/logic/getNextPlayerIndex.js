@@ -1,6 +1,9 @@
-export default (players, turn) => {
+/**
+ * @param {Array} players
+ * @param {number} turn - table.turn if not specified it's going to check every player
+ */
+export default (players, turn = -1) => {
   if (typeof players === 'undefined') return players;
-  if (typeof turn === 'undefined') return turn;
 
   const remainingPlayers = players.slice(turn + 1);
   const nextPlayerInRemaingPlayers = remainingPlayers.findIndex(
