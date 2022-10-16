@@ -171,7 +171,7 @@ function tableRoute() {
 
   return (
     <>
-      {!isNewHand && (
+      {isNewHand && (
         <SelectPlayers
           players={players}
           selectedPlayers={selectedPlayers}
