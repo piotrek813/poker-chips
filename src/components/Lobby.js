@@ -20,6 +20,7 @@ function Lobby({ tableId, isAdmin, playersWaiting }) {
     }
   };
 
+  console.log(navigator, navigator.clipboard);
   return (
     <Center>
       <Heading>Players waiting...</Heading>
