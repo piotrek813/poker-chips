@@ -15,6 +15,7 @@ function Lobby({ tableId, isAdmin, playersWaiting }) {
       );
       setIsCopied(true);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     }
   };

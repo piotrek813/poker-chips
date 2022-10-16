@@ -11,8 +11,11 @@ import {
   serverTimestamp,
   getDoc,
   updateDoc,
+  writeBatch,
+  increment,
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import calculateProfit from '../logic/calculateProfit';
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -118,4 +121,26 @@ export const startGame = async (tableId, playersWaiting) => {
     playersWaiting > 1
   )
     await updateDoc(doc(db, 'tables', tableId), { didStart: true });
+};
+
+export const triggerNewHand = async (allPlayers, selectedPlayers, tableRef) => {
+  const allPlayersProfit = calculateProfit(allPlayers, selectedPlayers);
+
+  const batch = writeBatch(db);
+  allPlayers.forEach((p, i) =>
+    batch.update(doc(db, 'players', p.id), {
+      bankroll: increment(allPlayersProfit[i]),
+      didFold: false,
+      currentContribution: 0,
+      totalContribution: 0,
+    }),
+  );
+  batch.update(tableRef, {
+    bettingRoundIndex: 0,
+    highestBet: 0,
+    highestChipsInvested: 0,
+    pot: 0,
+  });
+
+  await batch.commit();
 };

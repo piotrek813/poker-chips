@@ -10,12 +10,11 @@ import {
   orderBy,
   doc,
   updateDoc,
-  increment,
   writeBatch,
 } from 'firebase/firestore';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
-import { auth, converter, db } from '../utils/firebase';
+import { auth, converter, db, triggerNewHand } from '../utils/firebase';
 import Table from '../components/Table';
 import SelectPlayers from '../components/SelectPlayers';
 import Button from '../components/Button';
@@ -23,7 +22,6 @@ import Lobby from '../components/Lobby';
 import Spinner from '../components/Spinner';
 import getBettingRoundName from '../utils/getBettingRoundName';
 import getNextPlayerIndex from '../logic/getNextPlayerIndex';
-import calculateProfit from '../logic/calculateProfit';
 
 export async function loader({ params }) {
   return params.id;
@@ -132,7 +130,13 @@ function tableRoute() {
       );
       await batch.commit();
     }
-    if (startNewHand) setIsNewHand(true);
+    if (startNewHand) {
+      if (players.length === 2) {
+        console.log(players);
+        const profitingPlayer = players.filter((p) => !p.didFold);
+        triggerNewHand(allPlayers, profitingPlayer, tableRef);
+      } else setIsNewHand(true);
+    }
     setBet(0);
   };
 
@@ -148,25 +152,7 @@ function tableRoute() {
     if (selectedPlayers.length === 0) return;
     setIsNewHand(false);
 
-    const allPlayersProfit = calculateProfit(allPlayers, selectedPlayers);
-
-    const batch = writeBatch(db);
-    allPlayers.forEach((p, i) =>
-      batch.update(doc(db, 'players', p.id), {
-        bankroll: increment(allPlayersProfit[i]),
-        didFold: false,
-        currentContribution: 0,
-        totalContribution: 0,
-      }),
-    );
-
-    await batch.commit();
-    await updateDoc(tableRef, {
-      bettingRoundIndex: 0,
-      highestBet: 0,
-      highestChipsInvested: 0,
-      pot: 0,
-    });
+    triggerNewHand(allPlayers, selectedPlayers, tableRef);
 
     setSelectedPlayers([]);
   };
@@ -194,12 +180,12 @@ function tableRoute() {
         />
       )}
 
-      <GameInfo>
+      <div>
         <BettingRound>
           {getBettingRoundName(table.bettingRoundIndex)}
         </BettingRound>
         <Pot>Pot: {table.pot}</Pot>
-      </GameInfo>
+      </div>
       <Table players={players} />
 
       {players.length !== 0 && (
@@ -276,19 +262,17 @@ function tableRoute() {
     </>
   );
 }
-
-const GameInfo = styled.div`
-  /* background: var(--c-purple-1); */
-`;
-
 const BettingRound = styled.h3`
   font-size: 20px;
   font-weight: 700;
+  margin: 0;
 `;
 
 const Pot = styled.h3`
   font-size: 20px;
   font-weight: 400;
+  margin: 0;
+  margin-bottom: 20px;
 `;
 
 const Fieldset = styled.fieldset`
